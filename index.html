@@ -9,7 +9,6 @@
     .shape { position: absolute; padding: 20px; border-radius: 6px; cursor: move; user-select: none; text-align: center; }
     .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
     .selected { outline: 3px solid yellow; }
-    .controls { margin-top: 5px; display: block; }
     svg { position: absolute; top: 0; left: 0; pointer-events: none; }
     button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
     button { background: #00cc88; color: #fff; cursor: pointer; }
@@ -64,14 +63,7 @@
       box.style.left = "20px";
       box.style.top = (20 + shapes.length * 70) + "px";
       box.style.fontFamily = document.getElementById("fontPicker").value;
-
-      // seletor de cor individual
-      const colorInput = document.createElement("input");
-      colorInput.type = "color";
-      colorInput.value = "#00cc88";
-      colorInput.className = "controls";
-      colorInput.onchange = () => { box.style.background = colorInput.value; };
-      box.appendChild(colorInput);
+      box.style.background = "#00cc88"; // cor inicial padrão
 
       workspace.appendChild(box);
       shapes.push(box);
@@ -90,15 +82,27 @@
 
       // Clique simples para selecionar
       el.onclick = function(e) {
-        if (e.target.tagName === "INPUT") return; // não selecionar ao clicar no input de cor
-        toggleSelect(el);
+        if (e.shiftKey) {
+          // SHIFT + clique abre seletor de cor
+          const colorInput = document.createElement("input");
+          colorInput.type = "color";
+          colorInput.value = el.style.background || "#00cc88";
+          colorInput.onchange = () => {
+            el.style.background = colorInput.value;
+            colorInput.remove(); // remove após escolher
+          };
+          el.appendChild(colorInput);
+          colorInput.click(); // abre seletor imediatamente
+        } else {
+          toggleSelect(el);
+        }
       };
 
       // Botão direito para renomear
       el.oncontextmenu = function(e) {
         e.preventDefault();
-        const novoTexto = prompt("Digite o novo texto:", el.innerText.replace(/\n.*/, ""));
-        if (novoTexto) { el.childNodes[0].nodeValue = novoTexto; }
+        const novoTexto = prompt("Digite o novo texto:", el.innerText);
+        if (novoTexto) { el.innerText = novoTexto; }
       };
 
       // Arrastar
@@ -194,4 +198,6 @@
     }
 
     function savePNG() {
-      html2
+      html2canvas(workspace).then(canvas => {
+        const link = document.createElement("a");
+       
