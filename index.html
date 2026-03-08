@@ -15,11 +15,23 @@
       border: 2px solid #00cc88; background: #1a1a1a;
     }
     .shape {
-      position: absolute; padding: 20px; border-radius: 6px;
-      cursor: move; user-select: none; text-align: center;
-      min-width: 80px; min-height: 50px;
+      position: absolute;
+      min-width: 100px; max-width: 200px; /* largura mínima e máxima */
+      min-height: 40px;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: move;
+      user-select: none;
+      text-align: center;
+      word-wrap: break-word; /* quebra de linha automática */
+      overflow-wrap: break-word;
+      background: #00cc88;
     }
-    .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
+    .circle {
+      border-radius: 50%;
+      width: 80px; height: 80px;
+      line-height: 80px;
+    }
     .selected { outline: 3px solid yellow; }
     svg { position: absolute; top: 0; left: 0; pointer-events: none; }
     button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
@@ -37,7 +49,6 @@
       <li><b>SHIFT + clique:</b> Abre seletor de cor para a forma.</li>
       <li><b>Botão direito:</b> Renomeia o texto da forma.</li>
       <li><b>Arrastar:</b> Move a forma pelo espaço.</li>
-      <li><b>CTRL + arrastar:</b> Redimensiona a forma.</li>
       <li><b>Selecionar 2 formas:</b> Clique em duas formas e depois em <i>Conectar Selecionados</i> para criar seta (aponta para a última forma).</li>
       <li><b>Excluir Selecionado:</b> Remove a forma escolhida.</li>
       <li><b>Fonte:</b> Define a fonte global das formas.</li>
@@ -91,7 +102,6 @@
       box.style.left = "20px";
       box.style.top = (20 + shapes.length * 70) + "px";
       box.style.fontFamily = document.getElementById("fontPicker").value;
-      box.style.background = "#00cc88";
       workspace.appendChild(box);
       shapes.push(box);
       makeInteractive(box);
@@ -125,33 +135,18 @@
       };
       el.onmousedown = function(e) {
         if (e.button !== 0) return;
-
-        if (e.ctrlKey) {
-          // CTRL + arrastar → redimensiona
-          function resize(ev) {
-            el.style.width = (ev.pageX - el.offsetLeft) + "px";
-            el.style.height = (ev.pageY - el.offsetTop) + "px";
-            updateConnections();
-          }
-          document.addEventListener("mousemove", resize);
-          el.onmouseup = function() {
-            document.removeEventListener("mousemove", resize);
-            el.onmouseup = null;
-          };
-        } else {
-          // arrastar normal → mover
-          offsetX = e.offsetX; offsetY = e.offsetY;
-          function moveAt(ev) {
-            el.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
-            el.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
-            updateConnections();
-          }
-          document.addEventListener("mousemove", moveAt);
-          el.onmouseup = function() {
-            document.removeEventListener("mousemove", moveAt);
-            el.onmouseup = null;
-          };
+        offsetX = e.offsetX; offsetY = e.offsetY;
+        function moveAt(ev) {
+          el.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
+          el.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
+          updateConnections();
         }
+        function onMouseMove(ev) { moveAt(ev); }
+        document.addEventListener("mousemove", onMouseMove);
+        el.onmouseup = function() {
+          document.removeEventListener("mousemove", onMouseMove);
+          el.onmouseup = null;
+        };
       };
     }
 
