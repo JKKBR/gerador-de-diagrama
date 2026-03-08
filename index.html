@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gerador de Diagrama</title>
+  <title>Gerador de Diagrama com Setas</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -17,7 +17,6 @@
       margin: 20px auto;
       border: 2px solid #00cc88;
       background: #1a1a1a;
-      overflow: hidden;
     }
     .box {
       position: absolute;
@@ -28,6 +27,13 @@
       border-radius: 6px;
       cursor: move;
       user-select: none;
+      text-align: center;
+    }
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
     }
     button {
       background: #00cc88;
@@ -44,13 +50,16 @@
   </style>
 </head>
 <body>
-  <h1>Gerador de Diagrama (Drag & Drop)</h1>
+  <h1>Gerador de Diagrama com Setas</h1>
   <button onclick="addBox()">Adicionar Caixa</button>
-  <div id="workspace"></div>
+  <div id="workspace">
+    <svg id="connections" width="800" height="500"></svg>
+  </div>
 
   <script>
     const workspace = document.getElementById("workspace");
-    let boxCount = 0;
+    const svg = document.getElementById("connections");
+    let boxes = [];
 
     function addBox() {
       const text = prompt("Digite o texto da caixa:");
@@ -60,11 +69,18 @@
       box.className = "box";
       box.innerText = text;
       box.style.left = "20px";
-      box.style.top = (20 + boxCount * 60) + "px";
-      boxCount++;
+      box.style.top = (20 + boxes.length * 80) + "px";
 
-      // Eventos de arrastar
+      workspace.appendChild(box);
+      boxes.push(box);
+
+      makeDraggable(box);
+      updateConnections();
+    }
+
+    function makeDraggable(box) {
       let offsetX, offsetY;
+
       box.onmousedown = function(e) {
         offsetX = e.offsetX;
         offsetY = e.offsetY;
@@ -72,6 +88,7 @@
         function moveAt(ev) {
           box.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
           box.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
+          updateConnections();
         }
 
         function onMouseMove(ev) {
@@ -85,8 +102,49 @@
           box.onmouseup = null;
         };
       };
+    }
 
-      workspace.appendChild(box);
+    function updateConnections() {
+      svg.innerHTML = "";
+      for (let i = 1; i < boxes.length; i++) {
+        const prev = boxes[i-1].getBoundingClientRect();
+        const curr = boxes[i].getBoundingClientRect();
+        const workspaceRect = workspace.getBoundingClientRect();
+
+        const x1 = prev.left - workspaceRect.left + prev.width/2;
+        const y1 = prev.top - workspaceRect.top + prev.height;
+        const x2 = curr.left - workspaceRect.left + curr.width/2;
+        const y2 = curr.top - workspaceRect.top;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "#00cc88");
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("marker-end", "url(#arrow)");
+
+        svg.appendChild(line);
+      }
+
+      // Definição da seta
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+      marker.setAttribute("id", "arrow");
+      marker.setAttribute("markerWidth", "10");
+      marker.setAttribute("markerHeight", "10");
+      marker.setAttribute("refX", "5");
+      marker.setAttribute("refY", "5");
+      marker.setAttribute("orient", "auto");
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
+      path.setAttribute("fill", "#00cc88");
+
+      marker.appendChild(path);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
     }
   </script>
 </body>
