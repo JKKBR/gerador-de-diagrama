@@ -13,6 +13,7 @@ Um editor simples de diagramas feito em HTML, CSS e JavaScript. Permite criar bl
 - Alterar cor das setas.
 - Alterar cor do fundo do espaço de trabalho.
 - Exportar o diagrama como imagem PNG.
+  
 🖱️ Comandos
 - Clique simples: Seleciona/deseleciona uma forma.
 - SHIFT + clique: Abre seletor de cor para a forma.
@@ -25,6 +26,7 @@ Um editor simples de diagramas feito em HTML, CSS e JavaScript. Permite criar bl
 - Cor das setas: Define a cor global das setas.
 - Cor do fundo: Define a cor do espaço de trabalho.
 - Salvar em PNG: Exporta o diagrama como imagem.
+  
 🚀 Como usar
 - Abra o arquivo diagrama.html no navegador.
 - Use os botões para adicionar formas.
