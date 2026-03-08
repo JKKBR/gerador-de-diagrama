@@ -1,4 +1,5 @@
 Gerador de Diagramas
+
 Um editor simples de diagramas feito em HTML, CSS e JavaScript. Permite criar blocos (retângulos e círculos), conectar com setas direcionais, personalizar estilos e exportar em PNG.
 
 ✨ Funcionalidades
