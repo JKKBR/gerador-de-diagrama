@@ -61,17 +61,23 @@
   <div id="workspace-container">
     <h1>Gerador de Diagrama</h1>
     <label>Fonte:</label>
-    <select id="fontPicker" onchange="updateStyle()">
-      <option value="Arial">Arial</option>
-      <option value="Poppins">Poppins</option>
-      <option value="Courier New">Courier New</option>
-      <option value="Georgia">Georgia</option>
-      <option value="Verdana">Verdana</option>
-    </select>
-    <label>Cor das setas:</label>
-    <input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
-    <label>Cor do fundo:</label>
-    <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
+<select id="fontPicker" onchange="updateStyle()">
+  <option value="Arial">Arial</option>
+  <option value="Poppins">Poppins</option>
+  <option value="Courier New">Courier New</option>
+  <option value="Georgia">Georgia</option>
+  <option value="Verdana">Verdana</option>
+</select>
+
+<label>Cor das setas:</label>
+<input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
+
+<label>Cor do fundo:</label>
+<input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
+
+<label>Cor do texto:</label>
+<input type="color" id="textColorPicker" value="#ffffff" onchange="updateTextColor()">
+
     <br>
     <button onclick="addRect()">Adicionar Retângulo</button>
     <button onclick="addCircle()">Adicionar Círculo</button>
@@ -235,3 +241,4 @@
   </script>
 </body>
 </html>
+
