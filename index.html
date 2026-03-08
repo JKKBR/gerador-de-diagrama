@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Diagrama</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      text-align: center;
+    }
+    #workspace {
+      position: relative;
+      width: 800px;
+      height: 500px;
+      margin: 20px auto;
+      border: 2px solid #00cc88;
+      background: #1a1a1a;
+      overflow: hidden;
+    }
+    .box {
+      position: absolute;
+      width: 150px;
+      padding: 10px;
+      background: #00cc88;
+      color: #fff;
+      border-radius: 6px;
+      cursor: move;
+      user-select: none;
+    }
+    button {
+      background: #00cc88;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #009966;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Diagrama (Drag & Drop)</h1>
+  <button onclick="addBox()">Adicionar Caixa</button>
+  <div id="workspace"></div>
+
+  <script>
+    const workspace = document.getElementById("workspace");
+    let boxCount = 0;
+
+    function addBox() {
+      const text = prompt("Digite o texto da caixa:");
+      if (!text) return;
+
+      const box = document.createElement("div");
+      box.className = "box";
+      box.innerText = text;
+      box.style.left = "20px";
+      box.style.top = (20 + boxCount * 60) + "px";
+      boxCount++;
+
+      // Eventos de arrastar
+      let offsetX, offsetY;
+      box.onmousedown = function(e) {
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+
+        function moveAt(ev) {
+          box.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
+          box.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
+        }
+
+        function onMouseMove(ev) {
+          moveAt(ev);
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+
+        box.onmouseup = function() {
+          document.removeEventListener("mousemove", onMouseMove);
+          box.onmouseup = null;
+        };
+      };
+
+      workspace.appendChild(box);
+    }
+  </script>
+</body>
+</html>
