@@ -4,73 +4,51 @@
   <meta charset="UTF-8">
   <title>Gerador de Diagrama</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: #e0e0e0;
-      text-align: center;
-    }
-    #workspace {
-      position: relative;
-      width: 900px;
-      height: 500px;
-      margin: 20px auto;
-      border: 2px solid #00cc88;
-      background: #1a1a1a;
-      overflow: hidden;
-    }
-    .shape {
-      position: absolute;
-      padding: 20px;
-      background: #00cc88;
-      color: #fff;
-      border-radius: 6px;
-      cursor: move;
-      user-select: none;
-      text-align: center;
-    }
-    .circle {
-      border-radius: 50%;
-      width: 100px;
-      height: 100px;
-      line-height: 60px;
-    }
-    svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-    button {
-      background: #00cc88;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      margin: 5px;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background: #009966;
-    }
+    body { font-family: Arial, sans-serif; background: #0d0d0d; color: #e0e0e0; text-align: center; }
+    #workspace { position: relative; width: 900px; height: 500px; margin: 20px auto; border: 2px solid #00cc88; background: #1a1a1a; }
+    .shape { position: absolute; padding: 20px; border-radius: 6px; cursor: move; user-select: none; text-align: center; }
+    .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
+    .selected { outline: 3px solid yellow; }
+    svg { position: absolute; top: 0; left: 0; pointer-events: none; }
+    button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
+    button { background: #00cc88; color: #fff; cursor: pointer; }
+    button:hover { background: #009966; }
   </style>
 </head>
 <body>
   <h1>Gerador de Diagrama</h1>
+  
+  <!-- Paleta de cores e fontes -->
+  <label>Cor:</label>
+  <input type="color" id="colorPicker" value="#00cc88" onchange="updateStyle()">
+  
+  <label>Fonte:</label>
+  <select id="fontPicker" onchange="updateStyle()">
+    <option value="Arial">Arial</option>
+    <option value="Poppins">Poppins</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Verdana">Verdana</option>
+  </select>
+  
+  <br>
   <button onclick="addRect()">Adicionar Retângulo</button>
   <button onclick="addCircle()">Adicionar Círculo</button>
-  <button onclick="connectShapes()">Conectar Últimas Formas</button>
+  <button onclick="connectSelected()">Conectar Selecionados</button>
+  <button onclick="deleteSelected()">Excluir Selecionado</button>
   <button onclick="savePNG()">Salvar em PNG</button>
 
   <div id="workspace">
     <svg id="connections" width="900" height="500"></svg>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     const workspace = document.getElementById("workspace");
     const svg = document.getElementById("connections");
     let shapes = [];
     let connections = [];
+    let selectedShapes = [];
 
     function addRect() {
       const box = document.createElement("div");
@@ -78,9 +56,10 @@
       box.innerText = "Retângulo";
       box.style.left = "20px";
       box.style.top = (20 + shapes.length * 70) + "px";
+      applyStyle(box);
       workspace.appendChild(box);
       shapes.push(box);
-      makeDraggable(box);
+      makeInteractive(box);
     }
 
     function addCircle() {
@@ -89,26 +68,38 @@
       box.innerText = "Círculo";
       box.style.left = "200px";
       box.style.top = (20 + shapes.length * 70) + "px";
+      applyStyle(box);
       workspace.appendChild(box);
       shapes.push(box);
-      makeDraggable(box);
+      makeInteractive(box);
     }
 
-    function makeDraggable(el) {
+    function applyStyle(el) {
+      el.style.background = document.getElementById("colorPicker").value;
+      el.style.fontFamily = document.getElementById("fontPicker").value;
+    }
+
+    function updateStyle() {
+      shapes.forEach(el => applyStyle(el));
+      updateConnections();
+    }
+
+    function makeInteractive(el) {
       let offsetX, offsetY;
       el.onmousedown = function(e) {
+        if (e.detail === 2) { // duplo clique para selecionar
+          toggleSelect(el);
+          return;
+        }
         offsetX = e.offsetX;
         offsetY = e.offsetY;
-
         function moveAt(ev) {
           el.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
           el.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
           updateConnections();
         }
-
         function onMouseMove(ev) { moveAt(ev); }
         document.addEventListener("mousemove", onMouseMove);
-
         el.onmouseup = function() {
           document.removeEventListener("mousemove", onMouseMove);
           el.onmouseup = null;
@@ -116,12 +107,38 @@
       };
     }
 
-    function connectShapes() {
-      if (shapes.length < 2) return;
-      const from = shapes[shapes.length - 2];
-      const to = shapes[shapes.length - 1];
-      connections.push({ from, to });
-      updateConnections();
+    function toggleSelect(el) {
+      if (selectedShapes.includes(el)) {
+        el.classList.remove("selected");
+        selectedShapes = selectedShapes.filter(s => s !== el);
+      } else {
+        el.classList.add("selected");
+        selectedShapes.push(el);
+      }
+    }
+
+    function connectSelected() {
+      if (selectedShapes.length === 2) {
+        connections.push({ from: selectedShapes[0], to: selectedShapes[1] });
+        updateConnections();
+        selectedShapes.forEach(s => s.classList.remove("selected"));
+        selectedShapes = [];
+      } else {
+        alert("Selecione exatamente 2 formas (duplo clique).");
+      }
+    }
+
+    function deleteSelected() {
+      if (selectedShapes.length === 1) {
+        const el = selectedShapes[0];
+        workspace.removeChild(el);
+        shapes = shapes.filter(s => s !== el);
+        connections = connections.filter(c => c.from !== el && c.to !== el);
+        selectedShapes = [];
+        updateConnections();
+      } else {
+        alert("Selecione uma forma para excluir (duplo clique).");
+      }
     }
 
     function updateConnections() {
@@ -136,7 +153,7 @@
       marker.setAttribute("orient", "auto");
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
-      path.setAttribute("fill", "#00cc88");
+      path.setAttribute("fill", document.getElementById("colorPicker").value);
       marker.appendChild(path);
       defs.appendChild(marker);
       svg.appendChild(defs);
@@ -145,18 +162,16 @@
         const rect1 = c.from.getBoundingClientRect();
         const rect2 = c.to.getBoundingClientRect();
         const ws = workspace.getBoundingClientRect();
-
         const x1 = rect1.left - ws.left + rect1.width/2;
         const y1 = rect1.top - ws.top + rect1.height/2;
         const x2 = rect2.left - ws.left + rect2.width/2;
         const y2 = rect2.top - ws.top + rect2.height/2;
-
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", x1);
         line.setAttribute("y1", y1);
         line.setAttribute("x2", x2);
         line.setAttribute("y2", y2);
-        line.setAttribute("stroke", "#00cc88");
+        line.setAttribute("stroke", document.getElementById("colorPicker").value);
         line.setAttribute("stroke-width", "2");
         line.setAttribute("marker-end", "url(#arrow)");
         svg.appendChild(line);
@@ -172,7 +187,5 @@
       });
     }
   </script>
-  <!-- Biblioteca para exportar em PNG -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
