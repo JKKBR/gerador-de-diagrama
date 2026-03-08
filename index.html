@@ -6,23 +6,25 @@
   <style>
     body { font-family: Arial, sans-serif; background: #0d0d0d; color: #e0e0e0; display: flex; }
     #sidebar {
-      width: 250px;
-      background: #1a1a1a;
-      border-right: 2px solid #00cc88;
-      padding: 15px;
-      text-align: left;
+      width: 250px; background: #1a1a1a; border-right: 2px solid #00cc88;
+      padding: 15px; text-align: left;
     }
-    #workspace-container {
-      flex: 1;
-      text-align: center;
-    }
+    #workspace-container { flex: 1; text-align: center; }
     #workspace {
       position: relative; width: 900px; height: 500px; margin: 20px auto;
       border: 2px solid #00cc88; background: #1a1a1a;
     }
-    .shape { position: absolute; padding: 20px; border-radius: 6px; cursor: move; user-select: none; text-align: center; }
+    .shape {
+      position: absolute; padding: 20px; border-radius: 6px;
+      cursor: move; user-select: none; text-align: center;
+      min-width: 80px; min-height: 50px;
+    }
     .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
     .selected { outline: 3px solid yellow; }
+    .resize-handle {
+      width: 10px; height: 10px; background: white;
+      position: absolute; right: 0; bottom: 0; cursor: nwse-resize;
+    }
     svg { position: absolute; top: 0; left: 0; pointer-events: none; }
     button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
     button { background: #00cc88; color: #fff; cursor: pointer; }
@@ -32,7 +34,6 @@
   </style>
 </head>
 <body>
-  <!-- Painel lateral com descrição -->
   <div id="sidebar">
     <h2>Comandos</h2>
     <ul>
@@ -40,6 +41,7 @@
       <li><b>SHIFT + clique:</b> Abre seletor de cor para a forma.</li>
       <li><b>Botão direito:</b> Renomeia o texto da forma.</li>
       <li><b>Arrastar:</b> Move a forma pelo espaço.</li>
+      <li><b>Redimensionar:</b> Use a alça branca no canto inferior direito.</li>
       <li><b>Selecionar 2 formas:</b> Clique em duas formas e depois em <i>Conectar Selecionados</i> para criar seta (aponta para a última forma).</li>
       <li><b>Excluir Selecionado:</b> Remove a forma escolhida.</li>
       <li><b>Fonte:</b> Define a fonte global das formas.</li>
@@ -49,10 +51,8 @@
     </ul>
   </div>
 
-  <!-- Área principal -->
   <div id="workspace-container">
     <h1>Gerador de Diagrama</h1>
-    
     <label>Fonte:</label>
     <select id="fontPicker" onchange="updateStyle()">
       <option value="Arial">Arial</option>
@@ -61,13 +61,10 @@
       <option value="Georgia">Georgia</option>
       <option value="Verdana">Verdana</option>
     </select>
-    
     <label>Cor das setas:</label>
     <input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
-    
     <label>Cor do fundo:</label>
     <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
-    
     <br>
     <button onclick="addRect()">Adicionar Retângulo</button>
     <button onclick="addCircle()">Adicionar Círculo</button>
@@ -98,11 +95,33 @@
       box.style.left = "20px";
       box.style.top = (20 + shapes.length * 70) + "px";
       box.style.fontFamily = document.getElementById("fontPicker").value;
-      box.style.background = "#00cc88"; // cor inicial padrão
+      box.style.background = "#00cc88";
+
+      // Alça de redimensionamento
+      addResizeHandle(box);
 
       workspace.appendChild(box);
       shapes.push(box);
       makeInteractive(box);
+    }
+
+    function addResizeHandle(el) {
+      const handle = document.createElement("div");
+      handle.className = "resize-handle";
+      el.appendChild(handle);
+
+      handle.onmousedown = function(e) {
+        e.stopPropagation();
+        function resize(ev) {
+          el.style.width = (ev.pageX - el.offsetLeft) + "px";
+          el.style.height = (ev.pageY - el.offsetTop) + "px";
+          updateConnections();
+        }
+        document.addEventListener("mousemove", resize);
+        document.onmouseup = function() {
+          document.removeEventListener("mousemove", resize);
+        };
+      };
     }
 
     function updateStyle() {
@@ -114,36 +133,26 @@
 
     function makeInteractive(el) {
       let offsetX, offsetY;
-
-      // Clique simples para selecionar ou SHIFT + clique para cor
       el.onclick = function(e) {
         if (e.shiftKey) {
           const colorInput = document.createElement("input");
           colorInput.type = "color";
           colorInput.value = el.style.background || "#00cc88";
-          colorInput.onchange = () => {
-            el.style.background = colorInput.value;
-            colorInput.remove();
-          };
+          colorInput.onchange = () => { el.style.background = colorInput.value; colorInput.remove(); };
           el.appendChild(colorInput);
           colorInput.click();
         } else {
           toggleSelect(el);
         }
       };
-
-            // Botão direito para renomear
       el.oncontextmenu = function(e) {
         e.preventDefault();
         const novoTexto = prompt("Digite o novo texto:", el.innerText);
         if (novoTexto) { el.innerText = novoTexto; }
       };
-
-      // Arrastar
       el.onmousedown = function(e) {
         if (e.button !== 0) return;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
+        offsetX = e.offsetX; offsetY = e.offsetY;
         function moveAt(ev) {
           el.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
           el.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
@@ -168,10 +177,10 @@
       }
     }
 
-    function connectSelected() {
+        function connectSelected() {
       if (selectedShapes.length === 2) {
         const from = selectedShapes[0];
-        const to = selectedShapes[1]; // seta aponta para última selecionada
+        const to = selectedShapes[1];
         connections.push({ from, to });
         updateConnections();
         selectedShapes.forEach(s => s.classList.remove("selected"));
@@ -196,29 +205,18 @@
 
     function updateConnections() {
       svg.innerHTML = "";
-      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-      marker.setAttribute("id", "arrow");
-      marker.setAttribute("markerWidth", "10");
-      marker.setAttribute("markerHeight", "10");
-      marker.setAttribute("refX", "10");
-      marker.setAttribute("refY", "5");
-      marker.setAttribute("orient", "auto");
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
-      path.setAttribute("fill", document.getElementById("arrowColor").value);
-      marker.appendChild(path);
-      defs.appendChild(marker);
-      svg.appendChild(defs);
 
       connections.forEach(c => {
         const rect1 = c.from.getBoundingClientRect();
         const rect2 = c.to.getBoundingClientRect();
         const ws = workspace.getBoundingClientRect();
+
         const x1 = rect1.left - ws.left + rect1.width/2;
         const y1 = rect1.top - ws.top + rect1.height/2;
         const x2 = rect2.left - ws.left + rect2.width/2;
         const y2 = rect2.top - ws.top + rect2.height/2;
+
+        // Linha da seta
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", x1);
         line.setAttribute("y1", y1);
@@ -226,8 +224,21 @@
         line.setAttribute("y2", y2);
         line.setAttribute("stroke", document.getElementById("arrowColor").value);
         line.setAttribute("stroke-width", "2");
-        line.setAttribute("marker-end", "url(#arrow)");
         svg.appendChild(line);
+
+        // Triângulo na ponta da seta
+        const arrowHead = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        const size = 10;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const p1x = x2;
+        const p1y = y2;
+        const p2x = x2 - size * Math.cos(angle - Math.PI/6);
+        const p2y = y2 - size * Math.sin(angle - Math.PI/6);
+        const p3x = x2 - size * Math.cos(angle + Math.PI/6);
+        const p3y = y2 - size * Math.sin(angle + Math.PI/6);
+        arrowHead.setAttribute("points", `${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y}`);
+        arrowHead.setAttribute("fill", document.getElementById("arrowColor").value);
+        svg.appendChild(arrowHead);
       });
     }
 
