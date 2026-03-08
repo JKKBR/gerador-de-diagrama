@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gerador de Diagrama com Setas</title>
+  <title>Gerador de Diagrama</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,22 +12,28 @@
     }
     #workspace {
       position: relative;
-      width: 800px;
+      width: 900px;
       height: 500px;
       margin: 20px auto;
       border: 2px solid #00cc88;
       background: #1a1a1a;
+      overflow: hidden;
     }
-    .box {
+    .shape {
       position: absolute;
-      width: 150px;
-      padding: 10px;
+      padding: 20px;
       background: #00cc88;
       color: #fff;
       border-radius: 6px;
       cursor: move;
       user-select: none;
       text-align: center;
+    }
+    .circle {
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+      line-height: 60px;
     }
     svg {
       position: absolute;
@@ -40,7 +46,7 @@
       color: #fff;
       border: none;
       padding: 10px 15px;
-      margin: 10px;
+      margin: 5px;
       cursor: pointer;
       border-radius: 5px;
     }
@@ -50,71 +56,100 @@
   </style>
 </head>
 <body>
-  <h1>Gerador de Diagrama com Setas</h1>
-  <button onclick="addBox()">Adicionar Caixa</button>
+  <h1>Gerador de Diagrama</h1>
+  <button onclick="addRect()">Adicionar Retângulo</button>
+  <button onclick="addCircle()">Adicionar Círculo</button>
+  <button onclick="connectShapes()">Conectar Últimas Formas</button>
+  <button onclick="savePNG()">Salvar em PNG</button>
+
   <div id="workspace">
-    <svg id="connections" width="800" height="500"></svg>
+    <svg id="connections" width="900" height="500"></svg>
   </div>
 
   <script>
     const workspace = document.getElementById("workspace");
     const svg = document.getElementById("connections");
-    let boxes = [];
+    let shapes = [];
+    let connections = [];
 
-    function addBox() {
-      const text = prompt("Digite o texto da caixa:");
-      if (!text) return;
-
+    function addRect() {
       const box = document.createElement("div");
-      box.className = "box";
-      box.innerText = text;
+      box.className = "shape";
+      box.innerText = "Retângulo";
       box.style.left = "20px";
-      box.style.top = (20 + boxes.length * 80) + "px";
-
+      box.style.top = (20 + shapes.length * 70) + "px";
       workspace.appendChild(box);
-      boxes.push(box);
-
+      shapes.push(box);
       makeDraggable(box);
-      updateConnections();
     }
 
-    function makeDraggable(box) {
-      let offsetX, offsetY;
+    function addCircle() {
+      const box = document.createElement("div");
+      box.className = "shape circle";
+      box.innerText = "Círculo";
+      box.style.left = "200px";
+      box.style.top = (20 + shapes.length * 70) + "px";
+      workspace.appendChild(box);
+      shapes.push(box);
+      makeDraggable(box);
+    }
 
-      box.onmousedown = function(e) {
+    function makeDraggable(el) {
+      let offsetX, offsetY;
+      el.onmousedown = function(e) {
         offsetX = e.offsetX;
         offsetY = e.offsetY;
 
         function moveAt(ev) {
-          box.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
-          box.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
+          el.style.left = ev.pageX - workspace.offsetLeft - offsetX + "px";
+          el.style.top = ev.pageY - workspace.offsetTop - offsetY + "px";
           updateConnections();
         }
 
-        function onMouseMove(ev) {
-          moveAt(ev);
-        }
-
+        function onMouseMove(ev) { moveAt(ev); }
         document.addEventListener("mousemove", onMouseMove);
 
-        box.onmouseup = function() {
+        el.onmouseup = function() {
           document.removeEventListener("mousemove", onMouseMove);
-          box.onmouseup = null;
+          el.onmouseup = null;
         };
       };
     }
 
+    function connectShapes() {
+      if (shapes.length < 2) return;
+      const from = shapes[shapes.length - 2];
+      const to = shapes[shapes.length - 1];
+      connections.push({ from, to });
+      updateConnections();
+    }
+
     function updateConnections() {
       svg.innerHTML = "";
-      for (let i = 1; i < boxes.length; i++) {
-        const prev = boxes[i-1].getBoundingClientRect();
-        const curr = boxes[i].getBoundingClientRect();
-        const workspaceRect = workspace.getBoundingClientRect();
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+      marker.setAttribute("id", "arrow");
+      marker.setAttribute("markerWidth", "10");
+      marker.setAttribute("markerHeight", "10");
+      marker.setAttribute("refX", "5");
+      marker.setAttribute("refY", "5");
+      marker.setAttribute("orient", "auto");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
+      path.setAttribute("fill", "#00cc88");
+      marker.appendChild(path);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
 
-        const x1 = prev.left - workspaceRect.left + prev.width/2;
-        const y1 = prev.top - workspaceRect.top + prev.height;
-        const x2 = curr.left - workspaceRect.left + curr.width/2;
-        const y2 = curr.top - workspaceRect.top;
+      connections.forEach(c => {
+        const rect1 = c.from.getBoundingClientRect();
+        const rect2 = c.to.getBoundingClientRect();
+        const ws = workspace.getBoundingClientRect();
+
+        const x1 = rect1.left - ws.left + rect1.width/2;
+        const y1 = rect1.top - ws.top + rect1.height/2;
+        const x2 = rect2.left - ws.left + rect2.width/2;
+        const y2 = rect2.top - ws.top + rect2.height/2;
 
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", x1);
@@ -124,28 +159,20 @@
         line.setAttribute("stroke", "#00cc88");
         line.setAttribute("stroke-width", "2");
         line.setAttribute("marker-end", "url(#arrow)");
-
         svg.appendChild(line);
-      }
+      });
+    }
 
-      // Definição da seta
-      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-      marker.setAttribute("id", "arrow");
-      marker.setAttribute("markerWidth", "10");
-      marker.setAttribute("markerHeight", "10");
-      marker.setAttribute("refX", "5");
-      marker.setAttribute("refY", "5");
-      marker.setAttribute("orient", "auto");
-
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
-      path.setAttribute("fill", "#00cc88");
-
-      marker.appendChild(path);
-      defs.appendChild(marker);
-      svg.appendChild(defs);
+    function savePNG() {
+      html2canvas(workspace).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "diagrama.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
     }
   </script>
+  <!-- Biblioteca para exportar em PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
