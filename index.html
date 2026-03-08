@@ -21,10 +21,6 @@
     }
     .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
     .selected { outline: 3px solid yellow; }
-    .resize-handle {
-      width: 10px; height: 10px; background: white;
-      position: absolute; right: 0; bottom: 0; cursor: nwse-resize;
-    }
     svg { position: absolute; top: 0; left: 0; pointer-events: none; }
     button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
     button { background: #00cc88; color: #fff; cursor: pointer; }
@@ -41,7 +37,6 @@
       <li><b>SHIFT + clique:</b> Abre seletor de cor para a forma.</li>
       <li><b>Botão direito:</b> Renomeia o texto da forma.</li>
       <li><b>Arrastar:</b> Move a forma pelo espaço.</li>
-      <li><b>Redimensionar:</b> Use a alça branca no canto inferior direito.</li>
       <li><b>Selecionar 2 formas:</b> Clique em duas formas e depois em <i>Conectar Selecionados</i> para criar seta (aponta para a última forma).</li>
       <li><b>Excluir Selecionado:</b> Remove a forma escolhida.</li>
       <li><b>Fonte:</b> Define a fonte global das formas.</li>
@@ -96,32 +91,9 @@
       box.style.top = (20 + shapes.length * 70) + "px";
       box.style.fontFamily = document.getElementById("fontPicker").value;
       box.style.background = "#00cc88";
-
-      // Alça de redimensionamento
-      addResizeHandle(box);
-
       workspace.appendChild(box);
       shapes.push(box);
       makeInteractive(box);
-    }
-
-    function addResizeHandle(el) {
-      const handle = document.createElement("div");
-      handle.className = "resize-handle";
-      el.appendChild(handle);
-
-      handle.onmousedown = function(e) {
-        e.stopPropagation();
-        function resize(ev) {
-          el.style.width = (ev.pageX - el.offsetLeft) + "px";
-          el.style.height = (ev.pageY - el.offsetTop) + "px";
-          updateConnections();
-        }
-        document.addEventListener("mousemove", resize);
-        document.onmouseup = function() {
-          document.removeEventListener("mousemove", resize);
-        };
-      };
     }
 
     function updateStyle() {
@@ -177,7 +149,7 @@
       }
     }
 
-        function connectSelected() {
+    function connectSelected() {
       if (selectedShapes.length === 2) {
         const from = selectedShapes[0];
         const to = selectedShapes[1];
@@ -205,18 +177,16 @@
 
     function updateConnections() {
       svg.innerHTML = "";
-
       connections.forEach(c => {
         const rect1 = c.from.getBoundingClientRect();
         const rect2 = c.to.getBoundingClientRect();
         const ws = workspace.getBoundingClientRect();
-
         const x1 = rect1.left - ws.left + rect1.width/2;
         const y1 = rect1.top - ws.top + rect1.height/2;
         const x2 = rect2.left - ws.left + rect2.width/2;
         const y2 = rect2.top - ws.top + rect2.height/2;
 
-        // Linha da seta
+               // Linha
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", x1);
         line.setAttribute("y1", y1);
