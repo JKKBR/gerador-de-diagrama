@@ -165,7 +165,7 @@
       marker.setAttribute("markerHeight", "10");
       marker.setAttribute("refX", "10");
       marker.setAttribute("refY", "5");
-      marker.setAttribute("orient", "auto-start-reverse"); // garante direção correta
+      marker.setAttribute("orient", "auto");
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
       path.setAttribute("fill", document.getElementById("arrowColor").value);
@@ -194,13 +194,4 @@
     }
 
     function savePNG() {
-      html2canvas(workspace).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "diagrama.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
-  </script>
-</body>
-</html>
+      html2
