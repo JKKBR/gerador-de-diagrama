@@ -115,25 +115,24 @@
     function makeInteractive(el) {
       let offsetX, offsetY;
 
-      // Clique simples para selecionar
+      // Clique simples para selecionar ou SHIFT + clique para cor
       el.onclick = function(e) {
         if (e.shiftKey) {
-          // SHIFT + clique abre seletor de cor
           const colorInput = document.createElement("input");
           colorInput.type = "color";
           colorInput.value = el.style.background || "#00cc88";
           colorInput.onchange = () => {
             el.style.background = colorInput.value;
-            colorInput.remove(); // remove após escolher
+            colorInput.remove();
           };
           el.appendChild(colorInput);
-          colorInput.click(); // abre seletor imediatamente
+          colorInput.click();
         } else {
           toggleSelect(el);
         }
       };
 
-      // Botão direito para renomear
+            // Botão direito para renomear
       el.oncontextmenu = function(e) {
         e.preventDefault();
         const novoTexto = prompt("Digite o novo texto:", el.innerText);
@@ -171,8 +170,8 @@
 
     function connectSelected() {
       if (selectedShapes.length === 2) {
-        const from = selectedShapes[0]; // origem
-        const to = selectedShapes[1];   // destino (última selecionada)
+        const from = selectedShapes[0];
+        const to = selectedShapes[1]; // seta aponta para última selecionada
         connections.push({ from, to });
         updateConnections();
         selectedShapes.forEach(s => s.classList.remove("selected"));
@@ -205,4 +204,41 @@
       marker.setAttribute("refX", "10");
       marker.setAttribute("refY", "5");
       marker.setAttribute("orient", "auto");
-      const path = document.createElementNS
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
+      path.setAttribute("fill", document.getElementById("arrowColor").value);
+      marker.appendChild(path);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      connections.forEach(c => {
+        const rect1 = c.from.getBoundingClientRect();
+        const rect2 = c.to.getBoundingClientRect();
+        const ws = workspace.getBoundingClientRect();
+        const x1 = rect1.left - ws.left + rect1.width/2;
+        const y1 = rect1.top - ws.top + rect1.height/2;
+        const x2 = rect2.left - ws.left + rect2.width/2;
+        const y2 = rect2.top - ws.top + rect2.height/2;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", document.getElementById("arrowColor").value);
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("marker-end", "url(#arrow)");
+        svg.appendChild(line);
+      });
+    }
+
+    function savePNG() {
+      html2canvas(workspace).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "diagrama.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
