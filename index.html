@@ -18,8 +18,8 @@
 <body>
   <h1>Gerador de Diagrama</h1>
   
-  <!-- Paleta de cores e fontes -->
-  <label>Cor:</label>
+  <!-- Paletas -->
+  <label>Cor das formas/setas:</label>
   <input type="color" id="colorPicker" value="#00cc88" onchange="updateStyle()">
   
   <label>Fonte:</label>
@@ -30,6 +30,9 @@
     <option value="Georgia">Georgia</option>
     <option value="Verdana">Verdana</option>
   </select>
+  
+  <label>Cor do fundo:</label>
+  <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
   
   <br>
   <button onclick="addRect()">Adicionar Retângulo</button>
@@ -84,13 +87,29 @@
       updateConnections();
     }
 
+    function updateBackground() {
+      const color = document.getElementById("bgColorPicker").value;
+      workspace.style.background = color;
+    }
+
     function makeInteractive(el) {
       let offsetX, offsetY;
+
+      // Clique simples para selecionar
+      el.onclick = function() {
+        toggleSelect(el);
+      };
+
+      // Botão direito para renomear
+      el.oncontextmenu = function(e) {
+        e.preventDefault(); // evita menu padrão
+        const novoTexto = prompt("Digite o novo texto:", el.innerText);
+        if (novoTexto) el.innerText = novoTexto;
+      };
+
+      // Arrastar com botão esquerdo
       el.onmousedown = function(e) {
-        if (e.detail === 2) { // duplo clique para selecionar
-          toggleSelect(el);
-          return;
-        }
+        if (e.button !== 0) return; // só botão esquerdo arrasta
         offsetX = e.offsetX;
         offsetY = e.offsetY;
         function moveAt(ev) {
@@ -124,7 +143,7 @@
         selectedShapes.forEach(s => s.classList.remove("selected"));
         selectedShapes = [];
       } else {
-        alert("Selecione exatamente 2 formas (duplo clique).");
+        alert("Selecione exatamente 2 formas (clique simples).");
       }
     }
 
@@ -137,7 +156,7 @@
         selectedShapes = [];
         updateConnections();
       } else {
-        alert("Selecione uma forma para excluir (duplo clique).");
+        alert("Selecione uma forma para excluir (clique simples).");
       }
     }
 
@@ -148,7 +167,7 @@
       marker.setAttribute("id", "arrow");
       marker.setAttribute("markerWidth", "10");
       marker.setAttribute("markerHeight", "10");
-      marker.setAttribute("refX", "5");
+      marker.setAttribute("refX", "10");
       marker.setAttribute("refY", "5");
       marker.setAttribute("orient", "auto");
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
