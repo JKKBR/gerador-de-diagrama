@@ -26,6 +26,7 @@
       word-wrap: break-word; /* quebra de linha automática */
       overflow-wrap: break-word;
       background: #00cc88;
+      color: #ffffff; /* cor padrão do texto */
     }
     .circle {
       border-radius: 50%;
@@ -52,6 +53,7 @@
       <li><b>Selecionar 2 formas:</b> Clique em duas formas e depois em <i>Conectar Selecionados</i> para criar seta (aponta para a última forma).</li>
       <li><b>Excluir Selecionado:</b> Remove a forma escolhida.</li>
       <li><b>Fonte:</b> Define a fonte global das formas.</li>
+      <li><b>Cor do texto:</b> Define a cor global do texto das formas.</li>
       <li><b>Cor das setas:</b> Define a cor global das setas.</li>
       <li><b>Cor do fundo:</b> Define a cor do espaço de trabalho.</li>
       <li><b>Salvar em PNG:</b> Exporta o diagrama como imagem.</li>
@@ -61,23 +63,22 @@
   <div id="workspace-container">
     <h1>Gerador de Diagrama</h1>
     <label>Fonte:</label>
-<select id="fontPicker" onchange="updateStyle()">
-  <option value="Arial">Arial</option>
-  <option value="Poppins">Poppins</option>
-  <option value="Courier New">Courier New</option>
-  <option value="Georgia">Georgia</option>
-  <option value="Verdana">Verdana</option>
-</select>
+    <select id="fontPicker" onchange="updateStyle()">
+      <option value="Arial">Arial</option>
+      <option value="Poppins">Poppins</option>
+      <option value="Courier New">Courier New</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Verdana">Verdana</option>
+    </select>
 
-<label>Cor das setas:</label>
-<input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
+    <label>Cor do texto:</label>
+    <input type="color" id="textColorPicker" value="#ffffff" onchange="updateTextColor()">
 
-<label>Cor do fundo:</label>
-<input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
+    <label>Cor das setas:</label>
+    <input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
 
-<label>Cor do texto:</label>
-<input type="color" id="textColorPicker" value="#ffffff" onchange="updateTextColor()">
-
+    <label>Cor do fundo:</label>
+    <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
     <br>
     <button onclick="addRect()">Adicionar Retângulo</button>
     <button onclick="addCircle()">Adicionar Círculo</button>
@@ -116,6 +117,11 @@
     function updateStyle() {
       shapes.forEach(el => { el.style.fontFamily = document.getElementById("fontPicker").value; });
       updateConnections();
+    }
+
+    function updateTextColor() {
+      const color = document.getElementById("textColorPicker").value;
+      shapes.forEach(el => { el.style.color = color; });
     }
 
     function updateBackground() { workspace.style.background = document.getElementById("bgColorPicker").value; }
@@ -241,4 +247,3 @@
   </script>
 </body>
 </html>
-
