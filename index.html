@@ -4,8 +4,22 @@
   <meta charset="UTF-8">
   <title>Gerador de Diagrama</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0d0d0d; color: #e0e0e0; text-align: center; }
-    #workspace { position: relative; width: 900px; height: 500px; margin: 20px auto; border: 2px solid #00cc88; background: #1a1a1a; }
+    body { font-family: Arial, sans-serif; background: #0d0d0d; color: #e0e0e0; display: flex; }
+    #sidebar {
+      width: 250px;
+      background: #1a1a1a;
+      border-right: 2px solid #00cc88;
+      padding: 15px;
+      text-align: left;
+    }
+    #workspace-container {
+      flex: 1;
+      text-align: center;
+    }
+    #workspace {
+      position: relative; width: 900px; height: 500px; margin: 20px auto;
+      border: 2px solid #00cc88; background: #1a1a1a;
+    }
     .shape { position: absolute; padding: 20px; border-radius: 6px; cursor: move; user-select: none; text-align: center; }
     .circle { border-radius: 50%; width: 100px; height: 100px; line-height: 60px; }
     .selected { outline: 3px solid yellow; }
@@ -13,36 +27,57 @@
     button, select, input { margin: 5px; padding: 8px; border-radius: 5px; border: none; }
     button { background: #00cc88; color: #fff; cursor: pointer; }
     button:hover { background: #009966; }
+    h2 { color: #00cc88; font-size: 18px; }
+    ul { font-size: 14px; line-height: 1.6; }
   </style>
 </head>
 <body>
-  <h1>Gerador de Diagrama</h1>
-  
-  <!-- Paletas globais -->
-  <label>Fonte:</label>
-  <select id="fontPicker" onchange="updateStyle()">
-    <option value="Arial">Arial</option>
-    <option value="Poppins">Poppins</option>
-    <option value="Courier New">Courier New</option>
-    <option value="Georgia">Georgia</option>
-    <option value="Verdana">Verdana</option>
-  </select>
-  
-  <label>Cor das setas:</label>
-  <input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
-  
-  <label>Cor do fundo:</label>
-  <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
-  
-  <br>
-  <button onclick="addRect()">Adicionar Retângulo</button>
-  <button onclick="addCircle()">Adicionar Círculo</button>
-  <button onclick="connectSelected()">Conectar Selecionados</button>
-  <button onclick="deleteSelected()">Excluir Selecionado</button>
-  <button onclick="savePNG()">Salvar em PNG</button>
+  <!-- Painel lateral com descrição -->
+  <div id="sidebar">
+    <h2>Comandos</h2>
+    <ul>
+      <li><b>Clique simples:</b> Seleciona/deseleciona uma forma.</li>
+      <li><b>SHIFT + clique:</b> Abre seletor de cor para a forma.</li>
+      <li><b>Botão direito:</b> Renomeia o texto da forma.</li>
+      <li><b>Arrastar:</b> Move a forma pelo espaço.</li>
+      <li><b>Selecionar 2 formas:</b> Clique em duas formas e depois em <i>Conectar Selecionados</i> para criar seta (aponta para a última forma).</li>
+      <li><b>Excluir Selecionado:</b> Remove a forma escolhida.</li>
+      <li><b>Fonte:</b> Define a fonte global das formas.</li>
+      <li><b>Cor das setas:</b> Define a cor global das setas.</li>
+      <li><b>Cor do fundo:</b> Define a cor do espaço de trabalho.</li>
+      <li><b>Salvar em PNG:</b> Exporta o diagrama como imagem.</li>
+    </ul>
+  </div>
 
-  <div id="workspace">
-    <svg id="connections" width="900" height="500"></svg>
+  <!-- Área principal -->
+  <div id="workspace-container">
+    <h1>Gerador de Diagrama</h1>
+    
+    <label>Fonte:</label>
+    <select id="fontPicker" onchange="updateStyle()">
+      <option value="Arial">Arial</option>
+      <option value="Poppins">Poppins</option>
+      <option value="Courier New">Courier New</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Verdana">Verdana</option>
+    </select>
+    
+    <label>Cor das setas:</label>
+    <input type="color" id="arrowColor" value="#00cc88" onchange="updateConnections()">
+    
+    <label>Cor do fundo:</label>
+    <input type="color" id="bgColorPicker" value="#1a1a1a" onchange="updateBackground()">
+    
+    <br>
+    <button onclick="addRect()">Adicionar Retângulo</button>
+    <button onclick="addCircle()">Adicionar Círculo</button>
+    <button onclick="connectSelected()">Conectar Selecionados</button>
+    <button onclick="deleteSelected()">Excluir Selecionado</button>
+    <button onclick="savePNG()">Salvar em PNG</button>
+
+    <div id="workspace">
+      <svg id="connections" width="900" height="500"></svg>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -170,34 +205,4 @@
       marker.setAttribute("refX", "10");
       marker.setAttribute("refY", "5");
       marker.setAttribute("orient", "auto");
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", "M0,0 L10,5 L0,10 Z");
-      path.setAttribute("fill", document.getElementById("arrowColor").value);
-      marker.appendChild(path);
-      defs.appendChild(marker);
-      svg.appendChild(defs);
-
-      connections.forEach(c => {
-        const rect1 = c.from.getBoundingClientRect();
-        const rect2 = c.to.getBoundingClientRect();
-        const ws = workspace.getBoundingClientRect();
-        const x1 = rect1.left - ws.left + rect1.width/2;
-        const y1 = rect1.top - ws.top + rect1.height/2;
-        const x2 = rect2.left - ws.left + rect2.width/2;
-        const y2 = rect2.top - ws.top + rect2.height/2;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y2);
-        line.setAttribute("stroke", document.getElementById("arrowColor").value);
-        line.setAttribute("stroke-width", "2");
-        line.setAttribute("marker-end", "url(#arrow)");
-        svg.appendChild(line);
-      });
-    }
-
-    function savePNG() {
-      html2canvas(workspace).then(canvas => {
-        const link = document.createElement("a");
-       
+      const path = document.createElementNS
